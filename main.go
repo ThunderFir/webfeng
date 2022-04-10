@@ -27,7 +27,8 @@ func (eg *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // main v3
 func main() {
 	r := feng.New()
-
+	r.Get("/", pingHandler)
+	r.Get("/hello", headerHandler)
 	log.Fatal(r.Run(":9876"))
 }
 
@@ -44,12 +45,12 @@ func main() {
 //	log.Fatal(http.ListenAndServe(":9876", nil))
 //}
 
-func pingHandler(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "ping %q success\n", req.URL.Path)
+func pingHandler(c *feng.Context) {
+	c.String(feng.StatusOK, "ping %q success\n", c.Path)
 }
 
-func headerHandler(w http.ResponseWriter, req *http.Request) {
-	for k, v := range req.Header {
-		fmt.Fprintf(w, "Header[%q] = %q \n", k, v)
+func headerHandler(c *feng.Context) {
+	for k, v := range c.Req.Header {
+		_, _ = fmt.Fprintf(c.Writer, "Header[%q] = %q \n", k, v)
 	}
 }
