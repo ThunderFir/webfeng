@@ -28,7 +28,7 @@ func New() *Engine {
 }
 
 func (engine *Engine) addRoute(method string, pattern string, handler HandleFunc) {
-	engine.router.AddRouter(method, pattern, handler)
+	engine.router.addRoute(method, pattern, handler)
 }
 
 func (engine *Engine) Get(pattern string, handler HandleFunc) {

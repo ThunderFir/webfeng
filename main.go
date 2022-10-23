@@ -27,8 +27,10 @@ func (eg *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // main v3
 func main() {
 	r := feng.New()
-	r.Get("/", pingHandler)
-	r.Get("/hello", headerHandler)
+	r.Get("/", welcome)
+	r.Get("/hello", helloQuery)
+	r.Get("/hello/:name", helloParam)
+	r.Get("/ping/*path", pingHandler)
 	log.Fatal(r.Run(":9876"))
 }
 
@@ -45,8 +47,20 @@ func main() {
 //	log.Fatal(http.ListenAndServe(":9876", nil))
 //}
 
+func welcome(c *feng.Context) {
+	c.HTML(feng.StatusOK, "<h1>Welcome</h1>")
+}
+
+func helloQuery(c *feng.Context) {
+	c.String(feng.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
+}
+
+func helloParam(c *feng.Context) {
+	c.String(feng.StatusOK, "hello %s, you're at %s\n", c.Param("name"), c.Path)
+}
+
 func pingHandler(c *feng.Context) {
-	c.String(feng.StatusOK, "ping %q success\n", c.Path)
+	c.JSON(feng.StatusOK, feng.H{"ping path": c.Param("path")})
 }
 
 func headerHandler(c *feng.Context) {
