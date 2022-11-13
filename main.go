@@ -31,6 +31,12 @@ func main() {
 	r.Get("/hello", helloQuery)
 	r.Get("/hello/:name", helloParam)
 	r.Get("/ping/*path", pingHandler)
+
+	v1 := r.Group("/v1")
+	v1.Get("/", welcome)
+	v2 := r.Group("/v2")
+	v2.Post("/", headerHandler)
+	v2.Get("/hello", helloParam)
 	log.Fatal(r.Run(":9876"))
 }
 
