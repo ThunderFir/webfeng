@@ -3,6 +3,7 @@ package feng
 import (
 	"log"
 	"net/http"
+	"strings"
 )
 
 type HandleFunc func(c *Context)
@@ -20,8 +21,19 @@ type RouterGroup struct {
 	engine      *Engine
 }
 
+func (group *RouterGroup) Use(middlewares ...HandleFunc) {
+	group.middlewares = append(group.middlewares, middlewares...)
+}
+
 func (engine *Engine) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	var middlewares []HandleFunc
+	for _, group := range engine.groups {
+		if strings.HasPrefix(request.URL.Path, group.prefix) {
+			middlewares = append(middlewares, group.middlewares...)
+		}
+	}
 	c := newContext(writer, request)
+	c.handlers = middlewares
 	engine.router.handle(c)
 
 	// engine 入口原型 收束请求匹配对应的handler

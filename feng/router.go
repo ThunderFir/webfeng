@@ -28,10 +28,13 @@ func (r *router) handle(c *Context) {
 	if n != nil {
 		c.Params = params
 		key := c.Method + "-" + n.pattern
-		r.handlers[key](c)
+		c.handlers = append(c.handlers, r.handlers[key])
 	} else {
-		c.String(StatusNotFound, "404 not found path: %s", c.Path)
+		c.handlers = append(c.handlers, func(c *Context) {
+			c.String(StatusNotFound, "404 not found path: %s", c.Path)
+		})
 	}
+	c.Next()
 }
 
 func parsePattern(pattern string) []string {

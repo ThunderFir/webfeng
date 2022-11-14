@@ -1,6 +1,7 @@
 package main
 
 import (
+	"feng/middlewares"
 	"fmt"
 	"log"
 	"net/http"
@@ -27,6 +28,7 @@ func (eg *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // main v3
 func main() {
 	r := feng.New()
+	r.Use(middlewares.Logger())
 	r.Get("/", welcome)
 	r.Get("/hello", helloQuery)
 	r.Get("/hello/:name", helloParam)
@@ -35,6 +37,7 @@ func main() {
 	v1 := r.Group("/v1")
 	v1.Get("/", welcome)
 	v2 := r.Group("/v2")
+	v2.Use(middlewares.LoggerV2())
 	v2.Post("/", headerHandler)
 	v2.Get("/hello", helloParam)
 	log.Fatal(r.Run(":9876"))
