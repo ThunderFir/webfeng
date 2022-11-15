@@ -1,8 +1,10 @@
 package feng
 
 import (
+	"html/template"
 	"log"
 	"net/http"
+	"path"
 	"strings"
 )
 
@@ -12,6 +14,17 @@ type Engine struct {
 	*RouterGroup
 	router *router
 	groups []*RouterGroup
+
+	htmlTemplates *template.Template // for html render
+	funcMap       template.FuncMap   // for html render
+}
+
+func (engine *Engine) SetFuncMap(funcMap template.FuncMap) {
+	engine.funcMap = funcMap
+}
+
+func (engine *Engine) LoadHTMLGlob(pattern string) {
+	engine.htmlTemplates = template.Must(template.New("").Funcs(engine.funcMap).ParseGlob(pattern))
 }
 
 type RouterGroup struct {
@@ -19,6 +32,25 @@ type RouterGroup struct {
 	middlewares []HandleFunc
 	parent      *RouterGroup
 	engine      *Engine
+}
+
+func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileSystem) HandleFunc {
+	absolutePath := path.Join(group.prefix, relativePath)
+	fileServer := http.StripPrefix(absolutePath, http.FileServer(fs))
+	return func(c *Context) {
+		file := c.Param("filepath")
+		if _, err := fs.Open(file); err != nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		fileServer.ServeHTTP(c.Writer, c.Req)
+	}
+}
+
+func (group *RouterGroup) Static(relativePath string, root string) {
+	handler := group.createStaticHandler(relativePath, http.Dir(root))
+	urlPattern := path.Join(relativePath, "/*filepath")
+	group.Get(urlPattern, handler)
 }
 
 func (group *RouterGroup) Use(middlewares ...HandleFunc) {
@@ -34,6 +66,7 @@ func (engine *Engine) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 	}
 	c := newContext(writer, request)
 	c.handlers = middlewares
+	c.engine = engine
 	engine.router.handle(c)
 
 	// engine 入口原型 收束请求匹配对应的handler

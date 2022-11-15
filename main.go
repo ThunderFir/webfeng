@@ -3,8 +3,10 @@ package main
 import (
 	"feng/middlewares"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
+	"time"
 
 	"feng"
 )
@@ -29,6 +31,9 @@ func (eg *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func main() {
 	r := feng.New()
 	r.Use(middlewares.Logger())
+	r.SetFuncMap(template.FuncMap{"FormatAsDate": FormatAsDate})
+	r.LoadHTMLGlob("templates/*")
+	r.Static("/sub", "./templates")
 	r.Get("/", welcome)
 	r.Get("/hello", helloQuery)
 	r.Get("/hello/:name", helloParam)
@@ -36,10 +41,12 @@ func main() {
 
 	v1 := r.Group("/v1")
 	v1.Get("/", welcome)
+	v1.Get("/date", showTime)
 	v2 := r.Group("/v2")
 	v2.Use(middlewares.LoggerV2())
 	v2.Post("/", headerHandler)
 	v2.Get("/hello", helloParam)
+
 	log.Fatal(r.Run(":9876"))
 }
 
@@ -56,8 +63,20 @@ func main() {
 //	log.Fatal(http.ListenAndServe(":9876", nil))
 //}
 
+func showTime(c *feng.Context) {
+	c.HTML(feng.StatusOK, "custom_func.tmpl", feng.H{
+		"title": "NOW",
+		"now":   time.Now(),
+	})
+}
+
 func welcome(c *feng.Context) {
-	c.HTML(feng.StatusOK, "<h1>Welcome</h1>")
+	c.HTML(feng.StatusOK, "welcome.tmpl", nil)
+}
+
+func FormatAsDate(t time.Time) string {
+	year, month, day := t.Date()
+	return fmt.Sprintf("%d-%02d-%02d", year, month, day)
 }
 
 func helloQuery(c *feng.Context) {
