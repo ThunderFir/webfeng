@@ -1,21 +1,20 @@
-package middlewares
+package feng
 
 import (
-	"feng"
 	"log"
 	"time"
 )
 
-func Logger() feng.HandleFunc {
-	return func(c *feng.Context) {
+func Logger() HandleFunc {
+	return func(c *Context) {
 		t := time.Now()
 		c.Next()
 		log.Printf("[%d] %s in %v", c.StatusCode, c.Req.RequestURI, time.Since(t))
 	}
 }
 
-func LoggerV2() feng.HandleFunc {
-	return func(c *feng.Context) {
+func LoggerV2() HandleFunc {
+	return func(c *Context) {
 		// Start timer
 		t := time.Now()
 		// if a server error occurred

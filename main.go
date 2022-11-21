@@ -1,7 +1,6 @@
 package main
 
 import (
-	"feng/middlewares"
 	"fmt"
 	"html/template"
 	"log"
@@ -29,8 +28,7 @@ func (eg *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // main v3
 func main() {
-	r := feng.New()
-	r.Use(middlewares.Logger())
+	r := feng.Default()
 	r.SetFuncMap(template.FuncMap{"FormatAsDate": FormatAsDate})
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/sub", "./templates")
@@ -43,9 +41,10 @@ func main() {
 	v1.Get("/", welcome)
 	v1.Get("/date", showTime)
 	v2 := r.Group("/v2")
-	v2.Use(middlewares.LoggerV2())
+	//v2.Use(middlewares.LoggerV2())
 	v2.Post("/", headerHandler)
 	v2.Get("/hello", helloParam)
+	v2.Get("/panic", tryRecovery)
 
 	log.Fatal(r.Run(":9876"))
 }
@@ -95,4 +94,9 @@ func headerHandler(c *feng.Context) {
 	for k, v := range c.Req.Header {
 		_, _ = fmt.Fprintf(c.Writer, "Header[%q] = %q \n", k, v)
 	}
+}
+
+func tryRecovery(c *feng.Context) {
+	a := []int{1234}
+	c.String(http.StatusOK, string(a[10]))
 }
